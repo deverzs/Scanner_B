@@ -175,6 +175,7 @@ string tokenName[30] = { "ERROR", "WORD1", "WORD2", "PERIOD", "EOFM", "VERB", "V
 // Reserved Words                                                                                                                                                                                           
 string reservedWords[19] = { "masu", "masen", "mashita", "masendeshita", "desu", "deshita", "o", "wa", "ni", "watashi", "anata", "kare", "kanojo", "sore", "mata", "soshite", "shikashi", "dakara", "eofm" \
 };
+
 //check for reserved word prototype                                                                                                                                                                         
 bool reserved(std::string& w, tokentype& tt);
 
@@ -261,7 +262,8 @@ bool reserved(std::string& w, tokentype& tt)
 {
 	//check reserved words                                                                                                                                                                                    
 	string reservedWord;
-	bool foundIt = false; //making boolian statement to be false                                                                                                                                              
+	bool foundIt = false; //making boolean statement to be false   
+
    //set foundIt for reserved word                                                                                                                                                                           
 	for (int i = 0; i < 19; i++) //go in to loop and check for other conditions in it until we reach 19 words                                                                                                 
 	{
@@ -322,7 +324,7 @@ bool reserved(std::string& w, tokentype& tt)
 
 
 //=================================================
-// File parser.cpp written by Group Number: **
+// File parser.cpp written by Group Number: 18
 //=================================================
 
 // ----- Four Utility Functions and Globals -----------------------------------
@@ -330,15 +332,20 @@ bool reserved(std::string& w, tokentype& tt)
 // ** Need syntaxerror1 and syntaxerror2 functions (each takes 2 args)
 //    to display syntax error messages as specified by me.  
 
-// Type of error: **
+tokentype saved_token;
+string saved_lexeme;
+
+// Type of error: match_fails
 // Done by: ** 
 void syntaxerror1() {    }
-// Type of error: **
+
+
+// Type of error: switch_default
 // Done by: ** 
 void syntaxerror2() {    }
 
 // ** Need the updated match and next_token with 2 global vars
-// saved_token and saved_lexeme
+
 
 // Purpose: **
 // Done by: **
