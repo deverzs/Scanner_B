@@ -18,7 +18,6 @@ INSTRUCTION:  Complete all ** parts.
 using namespace std;
 
 
-//Testing a chnage 4/17
 
 //=====================================================                                                                                                                                                     
 // File scanner.cpp written by: Group Number: 18                                                                                                                                                            
@@ -170,6 +169,68 @@ bool period(string s)
 
 // Tokentype enum                                                                                                                                                                                           
 enum tokentype { ERROR, WORD1, WORD2, PERIOD, EOFM, VERB, VERBNEG, VERBPAST, VERBPASTNEG, IS, WAS, OBJECT, SUBJECT, DESTINATION, PRONOUN, CONNECTOR };
+
+string enum_value(tokentype tt)
+{
+	string type;
+
+	switch (tt)
+	{
+	case 0:
+		type = "ERROR";
+		break;
+	case 1:
+		type = "WORD1";
+		break;
+	case 2:
+		type = "WORD2";
+		break;
+	case 3:
+		type = "PERIOD";
+		break;
+	case 4:
+		type = "EOFM";
+		break;
+	case 5:
+		type = "VERB";
+		break;
+	case 6:
+		type = "VERBNEG";
+		break;
+	case 7:
+		type = "VERBPAST";
+		break;
+	case 8:
+		type = "VERBPASTNEG";
+		break;
+	case 9:
+		type = "IS";
+		break;
+	case 10:
+		type = "WAS";
+		break;
+	case 11:
+		type = "OBJECT";
+		break;
+	case 12:
+		type = "SUBJECT";
+		break;
+	case 13:
+		type = "DESTINATION";
+		break;
+	case 14:
+		type = "PRONOUN";
+		break;
+	case 15:
+		type = "CONNECTOR";
+		break;
+	default:
+		type = "ERROR in default";
+		break;
+	}
+
+	return type;
+}
 
 // TokenName                                                                                                                                                                                                
 string tokenName[30] = { "ERROR", "WORD1", "WORD2", "PERIOD", "EOFM", "VERB", "VERBNEG", "VERBPAST", "VERBPASTNEG", "IS", "WAS", "OBJECT", "SUBJECT", "DESTINATION", "PRONOUN", "CONNECTOR" };
@@ -331,50 +392,309 @@ bool reserved(std::string& w, tokentype& tt)
 
 // ----- Four Utility Functions and Globals -----------------------------------
 
-// ** Need syntaxerror1 and syntaxerror2 functions (each takes 2 args)
+//  Need syntaxerror1 and syntaxerror2 functions (each takes 2 args)
 //    to display syntax error messages as specified by me.  
 
 tokentype saved_token;
 string saved_lexeme;
+bool token_available;
 
 // Type of error: match_fails
-// Done by: ** 
-void syntaxerror1() {    }
+// Done by: Maria 
+void syntaxerror1(tokentype e, string w) 
+{ 
+	cout << "SYNTAX ERROR : Expected " << enum_value(e) << " but found " << w << endl;
+	exit(1);
+}
 
 
 // Type of error: switch_default
-// Done by: ** 
-void syntaxerror2() {    }
+// Done by: Maria
+void syntaxerror2(string w, string f)
+{
+	cout << "SYNTAX ERROR : Unexpected " << w << " found in " << f << endl;
+	exit(1);
+}
 
-// ** Need the updated match and next_token with 2 global vars
 
+// Need the updated match and next_token with 2 global vars
 
-// Purpose: **
-// Done by: **
-tokentype next_token() {
-	
-	return ERROR;
+// Purpose:Looks ahead to see what token comes next from the scanner
+// Done by: Zsuzsanna
+tokentype next_token() 
+{
+	if (!token_available)
+	{
+		scanner(saved_token, saved_lexeme);
+		cout << "Scanner called using word: " << saved_lexeme << endl;
+		token_available = true;
+	}
+	return saved_token;
 
 }
 
-// Purpose: **
-// Done by: **
-bool match(tokentype expected) {}
+// Purpose: Checks and eats up the expected token
+// Done by: Zsuzsanna
+bool match(tokentype expected) 
+{
+	if (next_token() != expected)
+	{
+		syntaxerror1(expected, saved_lexeme);
+		exit(1);
+	}
+	else
+	{
+		cout << "Matched " << enum_value(saved_token) << endl;
+		token_available = false;
+		return true;
+	}
+	return true;
+}
 
 // ----- RDP functions - one per non-term -------------------
+void story();
+void s();
+void after_subject();
+void after_noun();
+void after_object();
+void noun();
+void verb();
+void be();
+void tense();
 
-// ** Make each non-terminal into a function here
-// ** Be sure to put the corresponding grammar rule above each function
+// Make each non-terminal into a function here
+// Be sure to put the corresponding grammar rule above each function
 // ** Be sure to put the name of the programmer above each function
 
-// Grammar: **
-// Done by: **
+// Grammar: <story> := <s> { <s> }
+// Done by: Zsuzsanna
 
+void story()
+{
+	//process an s
+	cout << "\n\nProcessing <story>\n\n";
+	s();
+
+	//repeat for {}
+	while (true)
+	{
+		switch (next_token())
+		{
+			case CONNECTOR: //optional
+			case WORD1:     //from noun
+			case PRONOUN:   //from noun
+				s();
+				break;
+			default:
+				syntaxerror2(saved_lexeme, "<story>");
+		}
+	}
+}
+
+// Grammar: <s> := [CONNECTOR] <noun> SUBJECT <after subject>
+// Done by: **
+void s()
+{
+	//process an s
+	cout << "Processing <s>\n";
+
+	switch (next_token())
+	{
+		case CONNECTOR: //15
+			match(CONNECTOR);
+			noun();
+			break;
+		case WORD1:
+			noun();
+			break;
+		case PRONOUN:  //14
+			noun();
+			break;
+		default:
+			syntaxerror2(saved_lexeme, "<s>");
+	}
+
+	match(SUBJECT);
+	after_subject();
+}
+
+// Grammar: <after subject> := <verb> <tense> PERIOD | <noun> <after noun>
+// Done by: **
+void after_subject()
+{
+	cout << "Processing <after subject>\n";
+	switch (next_token())
+	{
+		case WORD2:
+			verb();
+			tense();
+			match(PERIOD);
+			break;
+		case WORD1:
+			noun();
+			after_noun();
+			break;
+		case PRONOUN:
+			noun();
+			break;
+		default:
+			syntaxerror2(saved_lexeme, "<after subject>");
+	}
+}
+
+
+// Grammar: <after noun> ::= <be> PERIOD | DESTINATION <verb> <tense> PERIOD | OBJECT <after object> 
+// Done by: **
+void after_noun()
+{
+	cout << "Processing <after noun>\n";
+
+	switch (next_token())
+	{
+		case IS:
+			be();
+			match(PERIOD);
+			break;
+		case WAS:
+			be();
+			match(PERIOD);
+			break;
+		case DESTINATION:
+			match(DESTINATION);
+			verb();
+			tense();
+			match(PERIOD);
+			break;
+		case OBJECT:
+			match(OBJECT);
+			after_object();
+			break;
+		default:
+			syntaxerror2(saved_lexeme, "<after subject>");
+
+	}
+}
+
+
+// Grammar: <after object> ::= <verb> <tense> PERIOD | <noun> DESTINATION <verb> <tense> PERIOD
+// Done by: **
+void after_object()
+{
+	cout << "Processing <after object>\n";
+
+	switch (next_token())
+	{
+	case WORD2:
+		verb();
+		tense();
+		match(PERIOD);
+		break;
+	case WORD1:
+		noun();
+		match(DESTINATION);
+		verb();
+		tense();
+		match(PERIOD);
+		break;
+	case PRONOUN:
+		noun();;
+		verb();
+		tense();
+		match(PERIOD);
+		break;
+	case OBJECT:
+		match(OBJECT);
+		after_object();
+		break;
+	default:
+		syntaxerror2(saved_lexeme, "<after object>");
+
+	}
+}
+
+
+// Grammar: <noun> ::= WORD1 | PRONOUN 
+// Done by: **
+void noun()
+{
+	cout << "Processing <noun>\n";
+	switch (next_token())
+	{
+		case WORD1:
+			match(WORD1);
+			break;
+		case PRONOUN:
+			match(PRONOUN);
+			break;
+		default:
+			syntaxerror2(saved_lexeme, "<noun>");
+	}
+}
+
+
+// Grammar: <verb> ::= WORD2
+// Done by: **
+void verb()
+{
+	cout << "Processing <verb>\n";
+	next_token();
+	match(WORD2);
+	
+}
+
+
+// Grammar: <be> ::=   IS | WAS
+// Done by: **
+void be()
+{
+	cout << "Processing <be>\n";
+	switch (next_token())
+	{
+		case IS:
+			match(IS);
+			break;
+		case WAS:
+			match(WAS);
+			break;
+		default:
+			syntaxerror2(saved_lexeme, "<be>");
+	}
+
+}
+
+
+// Grammar:  <tense> := VERBPAST  | VERBPASTNEG | VERB | VERBNEG
+// Done by: **
+void tense()
+{
+	cout << "Processing <tense>\n";
+
+	
+	switch (next_token())
+	{
+		case VERBPAST:
+			match(VERBPAST);
+			break;
+		case VERBPASTNEG:
+			match(VERBPASTNEG);
+			break;
+		case VERB:
+			match(VERB);
+			break;
+		case VERBNEG:
+			match(VERBNEG);
+			break;
+
+		default:
+			syntaxerror2(saved_lexeme, "<tense>");
+	}
+	
+}
 
 //----------- Driver ---------------------------
 
 // The new test driver to start the parser
-// Done by:  **
+// Done by:  Alaa
 int main()
 {
 	string filename;
@@ -382,10 +702,15 @@ int main()
 	cin >> filename;
 	fin.open(filename.c_str());
 
-	//** calls the <story> to start parsing
-	//** closes the input file 
+	token_available = false;
+
+	// calls the <story> to start parsing
+	story();
+
+	// closes the input file 
+	fin.close();
+	cout << "\n\nSuccessfully parsed <story>.\n";
 
 }// end
-//** require no other input files!
-//** syntax error EC requires producing errors.txt of error messages
-//** tracing On/Off EC requires sending a flag to trace message output functions
+// require no other input files!
+
