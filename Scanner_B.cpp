@@ -482,18 +482,23 @@ void s()
 	case CONNECTOR:
 		//check for the match of Connector
 		match(CONNECTOR);
+		getEword();
+		gen(CONNECTOR_LT);
 		//call noun() as next RDP function
 		noun();
+		getEword();
 		break;
 		//WORD1 found 
 	case WORD1:
 		//call noun() as next RDP function
 		noun();
+		getEword();
 		break;
 		//pronoun found 
 	case PRONOUN:
 		//call noun() as next RDP function
 		noun();
+		getEword();
 		break;
 		//unexpected word found
 	default:
@@ -501,6 +506,7 @@ void s()
 	}
 
 	match(SUBJECT);
+	gen(ACTOR);
 	after_subject();
 }
 
@@ -518,15 +524,21 @@ void after_subject()
 	case WORD2:
 		//call verb() as next RDP function
 		verb();
+		getEword();
+		gen(ACTION);
 		//call tense() as next RDP function
 		tense();
+		gen(TENSE);
 		//check if period is next
 		match(PERIOD);
+	
 		break;
 		//WORD1 found
 	case WORD1:
 		//call noun() as next RDP function
 		noun();
+		getEword();
+		
 		//call after_noun() as next RDP function
 		after_noun();
 		break;
@@ -534,6 +546,8 @@ void after_subject()
 	case PRONOUN:
 		//call noun() as next RDP function
 		noun();
+		getEword();
+		
 		break;
 		//unexpected word found
 	default:
@@ -541,35 +555,45 @@ void after_subject()
 	}
 }
 
-
-// Grammar: <after noun> ::= <be> PERIOD | DESTINATION <verb> <tense> PERIOD | OBJECT <after object> 
+// Grammar: <after noun> ::= <be> PERIOD | DESTINATION <verb> <tense> PERIOD | OBJECT <after object>
 // Done by: Alaa
-void after_noun()
+void after_noun() // Print processing message for after noun sentence
 {
 	cout << "Processing <after noun>\n";
 
 	switch (next_token())
 	{
-	case IS:
+	case IS: // Processing if the token matches with IS Case
+		be(); // Call be Method to process verb to be and see if the verb IS or WAS
+		gen(DESCRIPTION);
+		gen(TENSE);
+		match(PERIOD); // Call match and send PERIOD Type and print Matched message if it's equal to the expecting one
+		break;
+	case WAS: // Processing if the token matches with WAS Case
 		be();
-		match(PERIOD);
+		gen(DESCRIPTION);
+		gen(TENSE);
+		match(PERIOD); // Call match and send PERIOD Type and print Matched message if it's equal to the expecting one
+		
 		break;
-	case WAS:
-		be();
-		match(PERIOD);
+	case DESTINATION: // Processing if the token matches with DESTINATION Case
+		match(DESTINATION); // Call match and send DESTINATION Type and print Matched message if it's equal to the expecting one
+		gen(TO);
+		verb(); // Call the Verb Method to process verb
+		getEword();
+		gen(ACTION);
+		tense(); // Call the Tense Method to process tense by check the next token and put it with the right tense Case to process
+		gen(TENSE);
+		match(PERIOD); // Call match and send PERIOD Type and print Matched message if it's equal to the expecting one
+	
 		break;
-	case DESTINATION:
-		match(DESTINATION);
-		verb();
-		tense();
-		match(PERIOD);
-		break;
-	case OBJECT:
-		match(OBJECT);
-		after_object();
+	case OBJECT: // Processing if the token matches with OBJECT Case
+		match(OBJECT); // Call match and send PERIOD Type and print Matched message if it's equal to the expecting on
+		gen(OBJECT_LT);
+		after_object(); // Call the after object Method again in case the next token is OBJECT
 		break;
 	default:
-		syntaxerror2(saved_lexeme, "<after subject>");
+		syntaxerror2(saved_lexeme, "<after subject>"); //Otherwise (default case) Call the Syntax error 2 Method to print Syntax error message
 
 	}
 }
@@ -579,54 +603,70 @@ void after_noun()
 // Done by: Alaa
 void after_object()
 {
-	cout << "Processing <after object>\n";
+	cout << "Processing <after object>\n"; // Print processing message for after object sentence
 
 	switch (next_token())
 	{
-	case WORD2:
-		verb();
-		tense();
-		match(PERIOD);
+	case WORD2: // Processing if the token matches with WORD2 Case
+		verb(); // Call the Verb Method to process verb
+		getEword();
+		gen(ACTION);
+		tense(); // Call the Tense Method to process tense by check the next token and put it with the right tense Case to process
+		gen(TENSE);
+		match(PERIOD); // Call match and send PERIOD Type and print Matched message if it's equal to the expecting one
+		
 		break;
-	case WORD1:
-		noun();
-		match(DESTINATION);
-		verb();
-		tense();
-		match(PERIOD);
+	case WORD1: // Processing if the token matches with WORD1 Case
+		noun(); // Call the noun Method and start processing noun
+		getEword();
+		match(DESTINATION); // Call match and send DESTINATION Type and print Matched message if it's equal to the expecting one
+		gen(TO);
+		verb(); // Call the Verb Method to process verb
+		getEword();
+		gen(ACTION);
+		tense(); // Call the Tense Method to process tense by check the next token and put it with the right tense Case to process
+		gen(TENSE);
+		match(PERIOD); // Call match and send PERIOD Type and print Matched message if it's equal to the expecting one
+		
 		break;
-	case PRONOUN:
-		noun();;
-		verb();
-		tense();
-		match(PERIOD);
+	case PRONOUN: // Processing if the token matches with PRONOUN Case
+		noun(); // Call the noun Method and start processing noun
+		getEword();
+		verb(); // Call the Verb Method to process verb
+		getEword();
+		gen(ACTION);
+		tense(); // Call the Tense Method to process tense by check the next token and put it with the right tense Case to process
+		gen(TENSE);
+		match(PERIOD); // Call match and send PERIOD Type and print Matched message if it's equal to the expecting one
+	
 		break;
-	case OBJECT:
-		match(OBJECT);
-		after_object();
+	case OBJECT: // Processing if the token matches with Object Case
+		match(OBJECT); // Call match and send PERIOD Type and print Matched message if it's equal to the expecting one
+		after_object(); // Call the after object Method again in case the next token is OBJECT
 		break;
 	default:
-		syntaxerror2(saved_lexeme, "<after object>");
+		syntaxerror2(saved_lexeme, "<after object>"); //Otherwise (default case) Call the Syntax error 2 Method to print Syntax error message
 
 	}
 }
 
-
-// Grammar: <noun> ::= WORD1 | PRONOUN 
+// Grammar: <noun> ::= WORD1 | PRONOUN
 // Done by: Alaa
 void noun()
 {
-	cout << "Processing <noun>\n";
+	cout << "Processing <noun>\n"; // Print processing message
 	switch (next_token())
 	{
 	case WORD1:
-		match(WORD1);
+		match(WORD1); // If the word (token) is WORD1, Call match Method and send WORD1 Type
+		//gen(ACTOR);
 		break;
 	case PRONOUN:
-		match(PRONOUN);
+		match(PRONOUN); // If the word (token) is PRONOUN, Call match Method and send PRONOUN Type
+		//gen(ACTOR);
 		break;
 	default:
-		syntaxerror2(saved_lexeme, "<noun>");
+		syntaxerror2(saved_lexeme, "<noun>"); // Otherwise (default case) Call the Syntax error 2 Method to print Syntax error message
 	}
 }
 
@@ -727,6 +767,10 @@ void readLexicon()
 void getEword()
 {
 	saved_E_word = Lexicon[saved_lexeme];
+	if (saved_E_word == "")
+	{
+		saved_E_word = saved_lexeme;
+	}
 }
 
 //    gen(line_type) - using the line type,
@@ -735,18 +779,21 @@ void getEword()
 //  Done by: ** 
 void gen(int lt)
 {
+	if (saved_token == EOFM)
+	{
+		return;
+	}
 	if (lt == 6)
 	{
-		translateFile << lineName[lt] << tokenName[saved_token] << endl;
-	}
-	else if (saved_E_word != "")
-	{
-		translateFile << lineName[lt] << saved_E_word << endl;
+		translateFile << lineName[lt] << tokenName[saved_token] << endl << endl;;
 	}
 	else
 	{
-		translateFile << lineName[lt] << saved_lexeme << endl;
+		
+		translateFile << lineName[lt] << saved_E_word << endl;
+		
 	}
+
 	
 }
 // ----- Changes to the parser.cpp content ---------------------
@@ -777,18 +824,13 @@ int main()
 	string filename;
 	cout << "Enter the input file name: ";
 	//cin >> filename;
-	filename = "C:\\Users\\dever\\Desktop\\Spring2020\\TheoryComp\\cs421files\\CS421Progs\\ParserFiles\\partCtest1";
+	filename = "C:\\Users\\dever\\Desktop\\Spring2020\\TheoryComp\\cs421files\\CS421Progs\\TranslatorFiles\\partCtest1";
 	fin.open(filename.c_str());
 
 	token_available = false;
 
 	// calls the <story> to start parsing
-	//story();
-
-	//test case
-	saved_lexeme = "watashi";
-	getEword();
-	gen(1);
+	story();
 
 	// closes the input file 
 	fin.close();
