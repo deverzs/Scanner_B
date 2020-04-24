@@ -1,9 +1,11 @@
 #include<iostream>
 #include<fstream>
 #include<string>
+#include <iterator> 
+#include <map>
 using namespace std;
 
-/* 
+/*
 INSTRUCTION:  Complete all ** parts.
    You may use any method to connect this file to scanner.cpp
    that you had written.
@@ -167,73 +169,13 @@ bool period(string s)
 
 // TABLES Done by: Alaa                                                                                                                                                                                     
 
-// Tokentype enum                                                                                                                                                                                           
+//  Enums
 enum tokentype { ERROR, WORD1, WORD2, PERIOD, EOFM, VERB, VERBNEG, VERBPAST, VERBPASTNEG, IS, WAS, OBJECT, SUBJECT, DESTINATION, PRONOUN, CONNECTOR };
+enum line_type { CONNECTOR_LT , ACTOR, OBJECT_LT, TO, ACTION, DESCRIPTION, TENSE };
 
-string enum_value(tokentype tt)
-{
-	string type;
-
-	switch (tt)
-	{
-	case 0:
-		type = "ERROR";
-		break;
-	case 1:
-		type = "WORD1";
-		break;
-	case 2:
-		type = "WORD2";
-		break;
-	case 3:
-		type = "PERIOD";
-		break;
-	case 4:
-		type = "EOFM";
-		break;
-	case 5:
-		type = "VERB";
-		break;
-	case 6:
-		type = "VERBNEG";
-		break;
-	case 7:
-		type = "VERBPAST";
-		break;
-	case 8:
-		type = "VERBPASTNEG";
-		break;
-	case 9:
-		type = "IS";
-		break;
-	case 10:
-		type = "WAS";
-		break;
-	case 11:
-		type = "OBJECT";
-		break;
-	case 12:
-		type = "SUBJECT";
-		break;
-	case 13:
-		type = "DESTINATION";
-		break;
-	case 14:
-		type = "PRONOUN";
-		break;
-	case 15:
-		type = "CONNECTOR";
-		break;
-	default:
-		type = "ERROR in default";
-		break;
-	}
-
-	return type;
-}
-
-// TokenName                                                                                                                                                                                                
+// Tables                                                                                                                                                                                               
 string tokenName[30] = { "ERROR", "WORD1", "WORD2", "PERIOD", "EOFM", "VERB", "VERBNEG", "VERBPAST", "VERBPASTNEG", "IS", "WAS", "OBJECT", "SUBJECT", "DESTINATION", "PRONOUN", "CONNECTOR" };
+string lineName[7] = { "CONNECTOR: " , "ACTOR: " , "OBJECT: ", "TO: ", "ACTION: ", "DESCRIPTION: ", "TENSE: " };
 
 // Reserved Words                                                                                                                                                                                           
 string reservedWords[19] = { "masu", "masen", "mashita", "masendeshita", "desu", "deshita", "o", "wa", "ni", "watashi", "anata", "kare", "kanojo", "sore", "mata", "soshite", "shikashi", "dakara", "eofm" \
@@ -243,7 +185,8 @@ string reservedWords[19] = { "masu", "masen", "mashita", "masendeshita", "desu",
 bool reserved(std::string& w, tokentype& tt);
 
 // ------------ Scanner and Driver -----------------------      
-ifstream fin;  // global stream for reading from the input file                                                                                                                                             
+ifstream fin;  // global stream for reading from the input file  
+ofstream translateFile;
 
 // Scanner processes only one word each time it is called                                                                                                                                                   
 // Gives back the token type and the word itself                                                                                                                                                            
@@ -314,7 +257,7 @@ int scanner(tokentype& tt, string& w)
 }//the end of scanner                                                                                                                                                                                       
 
 
-                                                                                                                                                                                            
+
 
 // Reserved checks the word for being reserved                                                                                                                                                              
 // Returns true or false and sets the tokenType                                                                                                                                                             
@@ -395,15 +338,16 @@ bool reserved(std::string& w, tokentype& tt)
 //  Need syntaxerror1 and syntaxerror2 functions (each takes 2 args)
 //    to display syntax error messages as specified by me.  
 
-tokentype saved_token;
-string saved_lexeme;
-bool token_available;
+tokentype saved_token;			//saved token decided by scanner
+string saved_lexeme;			//saved word just read
+bool token_available;			//if a token has been determined
+string saved_E_word;			//translated word
 
 // Type of error: match_fails
 // Done by: Maria 
-void syntaxerror1(tokentype e, string w) 
-{ 
-	cout << "SYNTAX ERROR : Expected " << enum_value(e) << " but found " << w << endl;
+void syntaxerror1(tokentype e, string w)
+{
+	cout << "SYNTAX ERROR : Expected " << tokenName[e] << " but found " << w << endl;
 	exit(1);
 }
 
@@ -417,41 +361,58 @@ void syntaxerror2(string w, string f)
 }
 
 
-// Need the updated match and next_token with 2 global vars
 
 // Purpose:Looks ahead to see what token comes next from the scanner
 // Done by: Zsuzsanna
-tokentype next_token() 
+tokentype next_token()
 {
+	//if there is no token that has been determined
 	if (!token_available)
 	{
+		//read the next word and save it
 		scanner(saved_token, saved_lexeme);
+
+		//tracer for user
 		cout << "Scanner called using word: " << saved_lexeme << endl;
+
+		//flag that we have a token
 		token_available = true;
 	}
+
+	//return the token found
 	return saved_token;
 
 }
 
 // Purpose: Checks and eats up the expected token
 // Done by: Zsuzsanna
-bool match(tokentype expected) 
+bool match(tokentype expected)
 {
+	//if the next token is not what sent to match()
 	if (next_token() != expected)
 	{
+		//trace the syntax error
 		syntaxerror1(expected, saved_lexeme);
+
+		//exit the scanner/parser
 		exit(1);
 	}
-	else
+	else	//otherwise we have a match
 	{
-		cout << "Matched " << enum_value(saved_token) << endl;
+		//tracer to user
+		cout << "Matched " << tokenName[saved_token] << endl;
+		//reset the saved token to find the next token
 		token_available = false;
+		//return that we have a match successful
 		return true;
 	}
+	//satistfy the compiler
 	return true;
 }
 
 // ----- RDP functions - one per non-term -------------------
+
+//Proototypes
 void story();
 void s();
 void after_subject();
@@ -461,6 +422,8 @@ void noun();
 void verb();
 void be();
 void tense();
+void gen(int line_type);
+void getEword();
 
 // Make each non-terminal into a function here
 // Be sure to put the corresponding grammar rule above each function
@@ -471,47 +434,70 @@ void tense();
 
 void story()
 {
-	//process an s
+	//process a story tracer
 	cout << "\n\nProcessing <story>\n\n";
+	//process an s() 
 	s();
 
 	//repeat for {}
 	while (true)
 	{
+		//check which token was found
 		switch (next_token())
 		{
-			case CONNECTOR: //optional
-			case WORD1:     //from noun
-			case PRONOUN:   //from noun
-				s();
-				break;
-			default:
-				syntaxerror2(saved_lexeme, "<story>");
+			//the optional connector found
+		case CONNECTOR:
+			//fall through to continue
+		//case from noun found
+		case WORD1:
+			//fall through to continue
+		//case from noun found
+		case PRONOUN:
+			//call s() again
+			s();
+			break;
+			//end of file marker found
+		case EOFM:
+			//it's the end
+			return;
+			//unexpected word found
+		default:
+			syntaxerror2(saved_lexeme, "<story>");
 		}
 	}
 }
 
+
 // Grammar: <s> := [CONNECTOR] <noun> SUBJECT <after subject>
-// Done by: **
+// Done by: Zsuzsanna
 void s()
 {
-	//process an s
+	//process an s tracer
 	cout << "Processing <s>\n";
 
+	//check which token was found
 	switch (next_token())
 	{
-		case CONNECTOR: //15
-			match(CONNECTOR);
-			noun();
-			break;
-		case WORD1:
-			noun();
-			break;
-		case PRONOUN:  //14
-			noun();
-			break;
-		default:
-			syntaxerror2(saved_lexeme, "<s>");
+		//connector found
+	case CONNECTOR:
+		//check for the match of Connector
+		match(CONNECTOR);
+		//call noun() as next RDP function
+		noun();
+		break;
+		//WORD1 found 
+	case WORD1:
+		//call noun() as next RDP function
+		noun();
+		break;
+		//pronoun found 
+	case PRONOUN:
+		//call noun() as next RDP function
+		noun();
+		break;
+		//unexpected word found
+	default:
+		syntaxerror2(saved_lexeme, "<s>");
 	}
 
 	match(SUBJECT);
@@ -519,65 +505,78 @@ void s()
 }
 
 // Grammar: <after subject> := <verb> <tense> PERIOD | <noun> <after noun>
-// Done by: **
+// Done by: Zsuzsanna
 void after_subject()
 {
+	//process an after_subject tracer
 	cout << "Processing <after subject>\n";
+
+	//check which token was found
 	switch (next_token())
 	{
-		case WORD2:
-			verb();
-			tense();
-			match(PERIOD);
-			break;
-		case WORD1:
-			noun();
-			after_noun();
-			break;
-		case PRONOUN:
-			noun();
-			break;
-		default:
-			syntaxerror2(saved_lexeme, "<after subject>");
+		//WORD2 found
+	case WORD2:
+		//call verb() as next RDP function
+		verb();
+		//call tense() as next RDP function
+		tense();
+		//check if period is next
+		match(PERIOD);
+		break;
+		//WORD1 found
+	case WORD1:
+		//call noun() as next RDP function
+		noun();
+		//call after_noun() as next RDP function
+		after_noun();
+		break;
+		//Pronoun found
+	case PRONOUN:
+		//call noun() as next RDP function
+		noun();
+		break;
+		//unexpected word found
+	default:
+		syntaxerror2(saved_lexeme, "<after subject>");
 	}
 }
 
 
 // Grammar: <after noun> ::= <be> PERIOD | DESTINATION <verb> <tense> PERIOD | OBJECT <after object> 
-// Done by: **
+// Done by: Alaa
 void after_noun()
 {
 	cout << "Processing <after noun>\n";
 
 	switch (next_token())
 	{
-		case IS:
-			be();
-			match(PERIOD);
-			break;
-		case WAS:
-			be();
-			match(PERIOD);
-			break;
-		case DESTINATION:
-			match(DESTINATION);
-			verb();
-			tense();
-			match(PERIOD);
-			break;
-		case OBJECT:
-			match(OBJECT);
-			after_object();
-			break;
-		default:
-			syntaxerror2(saved_lexeme, "<after subject>");
+	case IS:
+		be();
+		match(PERIOD);
+		break;
+	case WAS:
+		be();
+		match(PERIOD);
+		break;
+	case DESTINATION:
+		match(DESTINATION);
+		verb();
+		tense();
+		match(PERIOD);
+		break;
+	case OBJECT:
+		match(OBJECT);
+		after_object();
+		break;
+	default:
+		syntaxerror2(saved_lexeme, "<after subject>");
 
 	}
 }
 
 
 // Grammar: <after object> ::= <verb> <tense> PERIOD | <noun> DESTINATION <verb> <tense> PERIOD
-// Done by: **
+// Done by: Alaa
 void after_object()
 {
 	cout << "Processing <after object>\n";
@@ -614,102 +613,190 @@ void after_object()
 
 
 // Grammar: <noun> ::= WORD1 | PRONOUN 
-// Done by: **
+// Done by: Alaa
 void noun()
 {
 	cout << "Processing <noun>\n";
 	switch (next_token())
 	{
-		case WORD1:
-			match(WORD1);
-			break;
-		case PRONOUN:
-			match(PRONOUN);
-			break;
-		default:
-			syntaxerror2(saved_lexeme, "<noun>");
+	case WORD1:
+		match(WORD1);
+		break;
+	case PRONOUN:
+		match(PRONOUN);
+		break;
+	default:
+		syntaxerror2(saved_lexeme, "<noun>");
 	}
 }
 
 
 // Grammar: <verb> ::= WORD2
-// Done by: **
+// Done by: Maria
 void verb()
 {
 	cout << "Processing <verb>\n";
 	next_token();
 	match(WORD2);
-	
+
 }
 
 
 // Grammar: <be> ::=   IS | WAS
-// Done by: **
+// Done by: Maria
 void be()
 {
 	cout << "Processing <be>\n";
 	switch (next_token())
 	{
-		case IS:
-			match(IS);
-			break;
-		case WAS:
-			match(WAS);
-			break;
-		default:
-			syntaxerror2(saved_lexeme, "<be>");
+	case IS:
+		match(IS);
+		break;
+	case WAS:
+		match(WAS);
+		break;
+	default:
+		syntaxerror2(saved_lexeme, "<be>");
 	}
 
 }
 
 
 // Grammar:  <tense> := VERBPAST  | VERBPASTNEG | VERB | VERBNEG
-// Done by: **
+// Done by: Maria
 void tense()
 {
 	cout << "Processing <tense>\n";
 
-	
+
 	switch (next_token())
 	{
-		case VERBPAST:
-			match(VERBPAST);
-			break;
-		case VERBPASTNEG:
-			match(VERBPASTNEG);
-			break;
-		case VERB:
-			match(VERB);
-			break;
-		case VERBNEG:
-			match(VERBNEG);
-			break;
+	case VERBPAST:
+		match(VERBPAST);
+		break;
+	case VERBPASTNEG:
+		match(VERBPASTNEG);
+		break;
+	case VERB:
+		match(VERB);
+		break;
+	case VERBNEG:
+		match(VERBNEG);
+		break;
 
-		default:
-			syntaxerror2(saved_lexeme, "<tense>");
+	default:
+		syntaxerror2(saved_lexeme, "<tense>");
+	}
+
+}
+
+
+//=================================================
+// File translator.cpp written by Group Number: 18
+//=================================================
+
+// ----- Additions to the parser.cpp ---------------------
+
+// Declare Lexicon (i.e. dictionary) that will hold the content of lexicon.txt
+map<string, string> Lexicon;
+
+// Make sure it is easy and fast to look up the translation.
+// Do not change the format or content of lexicon.txt 
+//  Done by: ** 
+void readLexicon()
+{
+	ifstream finLixi;
+	string english_w, japanese_w;
+
+	finLixi.open("C:\\Users\\dever\\Desktop\\Spring2020\\TheoryComp\\cs421files\\CS421Progs\\TranslatorFiles\\lexicon.txt");
+	//fin2.open("lexicon.txt");
+	
+	while(finLixi >>japanese_w)
+	{
+		finLixi >> english_w;
+		Lexicon[japanese_w] = english_w;		
+	}
+	finLixi.close();
+}
+
+// ** Additions to parser.cpp here:
+//    getEword() - using the current saved_lexeme, look up the English word
+//                 in Lexicon if it is there -- save the result   
+//                 in saved_E_word
+//  Done by: ** 
+void getEword()
+{
+	saved_E_word = Lexicon[saved_lexeme];
+}
+
+//    gen(line_type) - using the line type,
+//                     sends a line of an IR to translated.txt
+//                     (saved_E_word or saved_token is used)
+//  Done by: ** 
+void gen(int lt)
+{
+	if (lt == 6)
+	{
+		translateFile << lineName[lt] << tokenName[saved_token] << endl;
+	}
+	else if (saved_E_word != "")
+	{
+		translateFile << lineName[lt] << saved_E_word << endl;
+	}
+	else
+	{
+		translateFile << lineName[lt] << saved_lexeme << endl;
 	}
 	
 }
+// ----- Changes to the parser.cpp content ---------------------
 
-//----------- Driver ---------------------------
+// ** Comment update: Be sure to put the corresponding grammar 
+//    rule with semantic routine calls
+//    above each non-terminal function 
 
-// The new test driver to start the parser
-// Done by:  Alaa
+// ** Each non-terminal function should be calling
+//    getEword and/or gen now.
+
+
+
+
+// ---------------- Driver ---------------------------
+
+// The final test driver to start the translator
+// Done by:  **
+
 int main()
 {
+	//create dictionary of translations
+	readLexicon();
+	//opens the output file translated.txt
+	//translateFile.open("translate.txt");
+	translateFile.open("C:\\Users\\dever\\Desktop\\Spring2020\\TheoryComp\\cs421files\\CS421Progs\\ParserFiles\\translate.txt");
+	
 	string filename;
 	cout << "Enter the input file name: ";
-	cin >> filename;
+	//cin >> filename;
+	filename = "C:\\Users\\dever\\Desktop\\Spring2020\\TheoryComp\\cs421files\\CS421Progs\\ParserFiles\\partCtest1";
 	fin.open(filename.c_str());
 
 	token_available = false;
 
 	// calls the <story> to start parsing
-	story();
+	//story();
+
+	//test case
+	saved_lexeme = "watashi";
+	getEword();
+	gen(1);
 
 	// closes the input file 
 	fin.close();
 	cout << "\n\nSuccessfully parsed <story>.\n";
+
+
+	//closes traslated.txt
+	translateFile.close();
 
 }// end
 // require no other input files!
